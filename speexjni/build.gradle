@@ -1,5 +1,4 @@
-apply plugin: 'com.android.library'
-apply plugin: 'com.jfrog.bintray'
+apply plugin: 'com.android.model.library'
 apply plugin: 'com.github.dcendents.android-maven'
 
 version = '1.0'
@@ -7,27 +6,38 @@ group = 'com.github.morgenroth.codecs'
 
 def sharedVersion = version
 
-android {
-    compileSdkVersion 22
-    buildToolsVersion "23.0.2"
+model {
+    android {
+        compileSdkVersion = 22
+        buildToolsVersion = "23.0.2"
 
-    defaultConfig {
-        minSdkVersion 8
-        targetSdkVersion 23
-        versionCode 1
-        versionName sharedVersion
+        defaultConfig.with {
+            minSdkVersion.apiLevel = 8
+            targetSdkVersion.apiLevel = 23
+            versionCode = 1
+            versionName = sharedVersion
 
-        ndk {
-            moduleName "speex"
-            cFlags "-DANDROID_NDK "
-            ldLibs "log", "m"
-            stl "stlport_static"
+            buildConfigFields.with {
+                create() {
+                    type = "int"
+                    name = "VALUE"
+                    value = "1"
+                }
+            }
         }
     }
-    buildTypes {
+    android.ndk {
+        moduleName = "libspeex"
+        toolchain = "clang"
+        toolchainVersion = "3.5"
+        CFlags.addAll(["-DFIXED_POINT", "-DUSE_KISS_FFT", "-DEXPORT=''", "-UHAVE_CONFIG_H"])
+        CFlags.add("-I${file("src/main/jni/include")}".toString())
+        ldLibs.add("log")
+    }
+    android.buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            minifyEnabled = false
+            proguardFiles.add(file('proguard-android.txt'))
         }
     }
 }
@@ -59,50 +69,6 @@ install {
                     url "https://github.com/morgenroth/speex-android"
                 }
             }
-        }
-    }
-}
-
-Properties properties = new Properties()
-properties.load(project.rootProject.file('local.properties').newDataInputStream())
-
-task sourcesJar(type: Jar) {
-    from android.sourceSets.main.java.srcDirs
-    classifier = 'sources'
-}
-
-task javadoc(type: Javadoc) {
-    source = android.sourceSets.main.java.srcDirs
-    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
-}
-
-task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
-    from javadoc.destinationDir
-}
-
-artifacts {
-    archives javadocJar
-    archives sourcesJar
-}
-
-bintray {
-    user = properties.getProperty('bintray.user')
-    key = properties.getProperty('bintray.api_key')
-    configurations = ['archives']
-    publish=true
-    pkg {
-        userOrg = 'morgenroth'
-        repo = 'maven'
-        name = 'speex-android'
-        websiteUrl = 'https://github.com/morgenroth/speex-android'
-        issueTrackerUrl = 'https://github.com/morgenroth/speex-android/issues'
-        vcsUrl = 'https://github.com/morgenroth/speex-android.git'
-        labels = ['ibrdtn', 'dtn']
-        licenses = ['Apache 2.0']
-        version {
-            name=sharedVersion
-            vcsTag=sharedVersion
         }
     }
 }
