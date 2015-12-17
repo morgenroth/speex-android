@@ -117,7 +117,7 @@ JNIEXPORT jshortArray JNICALL Java_com_purplefrog_speexjni_SpeexDecoder_decode
   (JNIEnv *env, jclass cls, jint slot, jbyteArray input_frame_)
 {
     if (throwIfBadSlot(env, slot))
-	return;
+	    return 0;
 
     struct Slot * gob = slots.slots[slot];
 
@@ -139,8 +139,8 @@ JNIEXPORT jshortArray JNICALL Java_com_purplefrog_speexjni_SpeexDecoder_decode
     jshortArray rval;
     rval = (*env)->NewShortArray(env, frame_size);
     if (rval==0) {
-	throwOutOfMemoryError(env, "failed to allocate speex output frame");
-	return;
+	    throwOutOfMemoryError(env, "failed to allocate speex output frame");
+	    return 0;
     }
 
     short* output_frame = (*env)->GetShortArrayElements(env, rval, 0);
